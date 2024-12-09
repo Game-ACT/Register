@@ -59,6 +59,7 @@ struct RegisterView: View {
                 .background(.blue)
                 .clipShape(RoundedRectangle(cornerRadius: CGFloat(10)))
         }
+        .padding()
         
         Text(error)
             .fontWeight(.bold)

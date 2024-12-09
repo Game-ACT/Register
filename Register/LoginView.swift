@@ -22,18 +22,19 @@ func loadCSV(from filename: String) -> [User]? {
     }
     
     do {
-        let content = try String(contentsOfFile: filepath)
+        // Added Encoding (Normally UTF-8 for CSVs)
+        let content = try String(contentsOfFile: filepath, encoding: .utf8)
         let rows = content.components(separatedBy: "\n").filter
         {
+            // drop first row
             !$0.isEmpty
         }
-        //var?
         var users : [User] = []
         
         for row in rows {
             let columns = row.components(separatedBy: ",")
-            // unneeded checkvalve
             if columns.count >= 2 {
+                // Strip first 2 columns
                 let username =  columns[0].trimmingCharacters(in: .whitespacesAndNewlines)
                 let password = columns[1].trimmingCharacters(in: .whitespacesAndNewlines)
                 let additinfo = Array(columns.dropFirst(2))
@@ -58,55 +59,63 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var showAlert: Bool = false
     @State private var loginSuccess: Bool = false
+    @State private var navigateToMain: Bool = false
     
     var body: some View {
-        VStack {
-            Text("Login")
-                .font(.title)
-                .fontDesign(.rounded)
-            
-            Form {
-                Section(header: Text("Username")) {
-                    TextField("Enter Your Username", text: $username)
-                        .textFieldStyle(.roundedBorder)
-                        .textInputAutocapitalization(.never)
-                }
-                
-                Section(header: Text("Password")) {
-                    SecureField("Enter Your Password", text: $password)
-                        .textFieldStyle(.roundedBorder)
-                }
-                
-            }
-            .padding()
-            
-            Button(action: {
-                if let users = loadCSV(from: "users") {
-                    if let _ = login(users: users, username: username, password: password) {
-                        loginSuccess = true
-                    } else {
-                        loginSuccess = false
-                    }
-                }
-                showAlert = true
-                
-            }) {
+        NavigationStack {
+            VStack {
                 Text("Login")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: CGFloat(10)))
-                    .foregroundStyle(.white)
+                    .font(.title)
+                    .fontDesign(.rounded)
+                
+                Form {
+                    Section(header: Text("Username")) {
+                        TextField("Enter Your Username", text: $username)
+                            .textFieldStyle(.roundedBorder)
+                            .textInputAutocapitalization(.never)
+                    }
+                    
+                    Section(header: Text("Password")) {
+                        SecureField("Enter Your Password", text: $password)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                }
+                .padding()
+                // .clipShape(RoundedRectangle(cornerRadius: CGFloat(20)))
+                
+                Button(action: {
+                    if let users = loadCSV(from: "users") {
+                        if let _ = login(users: users, username: username, password: password) {
+                            loginSuccess = true
+                            navigateToMain = true
+                        } else {
+                            loginSuccess = false
+                            showAlert = true
+                        }
+                    }
+                    
+                }) {
+                    Text("Login")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: CGFloat(10)))
+                        .foregroundStyle(.white)
+                }
+                .padding()
+                .alert(isPresented: $showAlert) {
+                    Alert(title: Text(loginSuccess ? "Login Success" : "Login Failed"),
+                          message: Text(loginSuccess ? "Welcome \(username)" : "Invalid username or password"),
+                          dismissButton: .default(Text("Dismiss"))
+                    )
+                }
             }
             .padding()
-            .alert(isPresented: $showAlert) {
-                Alert(title: Text(loginSuccess ? "Login Success" : "Login Failed"),
-                  message: Text(loginSuccess ? "Welcome \(username)" : "Invalid username or password"),
-                      dismissButton: .default(Text("Dismiss"))
-                )
+            .navigationDestination(isPresented: $navigateToMain) {
+                MainView(username: $username)
             }
         }
-        .padding()
     }
 }
 

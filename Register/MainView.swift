@@ -15,8 +15,7 @@ struct MainView: View {
         Text("Main View")
             .font(.title)
             .fontDesign(.rounded)
-        Text("Hello!, " + self.username)
-            .font(.headline)
+        Text("Hello!,  " + self.username)
             .padding()
     }
 }
